@@ -1,4 +1,4 @@
-from sim_metrics import (L2
+from metrics.sim_metrics import (L2,
                          SSIMMetric,
                          PSNRMetric,
                          LPIPSMetric)

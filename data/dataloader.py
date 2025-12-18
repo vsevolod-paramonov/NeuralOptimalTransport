@@ -29,7 +29,7 @@ class DomenLoader:
 
         self.config = config
   
-        self.batch_size = 64
+        self.batch_size = 3
         self.shuffle = True
 
         self.domen_X = domen_X
@@ -46,8 +46,8 @@ class DomenLoader:
         Create an iterator for the DataLoader
         """
 
-        self.indices_X = list(range(self.len_A))
-        self.indices_Y = list(range(self.len_B))
+        self.indices_X = list(range(self.len_X))
+        self.indices_Y = list(range(self.len_Y))
 
         if self.shuffle:
             random.shuffle(self.indices_X)
@@ -83,3 +83,10 @@ class DomenLoader:
 
         return {'images_X': batch_X,
                 'images_Y': batch_Y}
+    
+    def __len__(self):
+        """
+        Return num of pairs
+        """
+
+        return self.max_len

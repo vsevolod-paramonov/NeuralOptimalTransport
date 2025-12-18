@@ -1,17 +1,22 @@
 import os
-import tqdm
 import torch
-# from mtdatasets.dataset import LanguageDataset, TranslatorDataset
-# from mtdatasets.dataloader import TranslatorDataLoader
+
+from data import DomenDataset, DomenLoader
+
 from abc import abstractmethod
 from logger import logwriter
 
-import sys
+domen_X = '/Users/vsevolodparamonov/Downloads/img_align_celeba'
+domen_Y = '/Users/vsevolodparamonov/Downloads/cropped'
+experiment_dir = '/Users/vsevolodparamonov/NeuralOptimalTransport/experiments'
+exp_name = 'default'
+epoch_num = 10
+
 
 class BaseTrainer:
     def __init__(self, config):
         self.config = config
-        self.device = config.exp.device 
+        self.device = 'cpu'
 
     
     def setup(self):
@@ -39,43 +44,35 @@ class BaseTrainer:
         self.logwriter = logwriter.Logger(exp_logs_dir)
 
     def setup_experiment_dir(self):
-        self.experiment_dir = os.path.join(os.getcwd(), self.config.exp.exp_dir, self.config.exp.exp_name)
+        self.experiment_dir = os.path.join(os.getcwd(), experiment_dir, exp_name)
         os.makedirs(self.experiment_dir, exist_ok=True)
 
     def setup_datasets(self):
-        pass
+        self.source_dataset = DomenDataset(domen_X)
+        self.target_dataset = DomenDataset(domen_Y)
         
     def setup_dataloaders(self):
-        self.train_loader = TranslatorDataLoader(self.train_dataset, batch_size=self.config.train.batch_size, shuffle=True)
-        self.val_loader = TranslatorDataLoader(self.val_dataset, batch_size=self.config.train.batch_size, shuffle=False)
+        self.dataloader = DomenLoader(..., self.source_dataset, self.target_dataset)
 
     def training_loop(self):
-        self.to_train()
+        # self.to_train()
 
         self.logwriter._log_custom_message('Started fitting')
         self.iter = 0
         self.cur_epoch = 0
 
-        for i in range(self.config.train.epoch_num):
+        for i in range(epoch_num):
 
             self.cur_epoch = i
             train_loss = self.train_epoch()
-            val_loss = self.val_epoch()
 
-            train_loss.update(val_loss)
-
-            if i % self.config.train.checkpoint_step == 0 and i > 0:
-                self.save_checkpoint()
+            # if i % self.config.train.checkpoint_step == 0 and i > 0:
+            #     self.save_checkpoint()
 
 
             self.logwriter._log_metrics(train_loss, i)
 
         self.logwriter._log_custom_message('Fitting ended')
-
-    @torch.inference_mode()
-    def inf(...):
-        pass
-
 
             
     @abstractmethod

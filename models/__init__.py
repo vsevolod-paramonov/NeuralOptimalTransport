@@ -1,2 +1,2 @@
-from resnet import Discriminator
-from unet import UNet
+from models.resnet import Discriminator
+from models.unet import UNet

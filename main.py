@@ -1,18 +1,22 @@
 import hydra
 from omegaconf import DictConfig
-# from trainer.translator_trainer import TranslationTrainer
+from trainer.not_trainer import NOTrainer
 import torch
 import numpy as np
 
-@hydra.main(config_path="/Users/pparamonovv/Desktop/not/configs", config_name="default", version_base="1.1")
+seed = 52
+
+@hydra.main(config_path="/Users/vsevolodparamonov/NeuralOptimalTransport/configs", config_name="default", version_base="1.1")
 def main(cfg: DictConfig):
 
-    np.random.seed(cfg.exp.seed)
-    torch.random.manual_seed(cfg.exp.seed)
+    np.random.seed(seed)
+    torch.random.manual_seed(seed)
     
-    # trainer = TranslationTrainer(cfg)
+    trainer = NOTrainer(cfg)
 
-    # trainer.setup()
+    trainer.setup()
+
+    trainer.training_loop()
     
     # if not cfg.inference.inference_mode:
     #     trainer.training_loop()

@@ -1,5 +1,4 @@
 import torch
-import torch.nn.functional as F
 import torchvision.transforms.functional as TF
 from skimage.metrics import peak_signal_noise_ratio as compare_psnr
 from skimage.metrics import structural_similarity as compare_ssim
@@ -16,7 +15,7 @@ class L2:
     def __call__(self, img1: torch.Tensor, 
                        img2: torch.Tensor):
 
-        return F.mse_loss(img1, img2).item()
+        return torch.norm(img1 - img2, p=2, dim=(1, 2, 3))
 
 
 class PSNRMetric:

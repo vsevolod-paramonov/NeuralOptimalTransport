@@ -1,0 +1,4 @@
+*.ipynb
+outputs/
+experiments/
+images/

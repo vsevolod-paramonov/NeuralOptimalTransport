@@ -11,8 +11,8 @@ class DomenDataset(Dataset):
     """
 
     def __init__(self, root_dir: str, 
-                       transform: v2.Compose = None, 
-                       split: str = 'train'):
+                       transform: v2.Compose = None
+                       ):
         """
         Initialize the dataset
 
@@ -22,8 +22,6 @@ class DomenDataset(Dataset):
             Path to the directory containing the dataset
         transform : v2.Compose, optional
             Transform to be applied on a sample (default: None)
-        split : str
-            Dataset split to use ('train', 'test') (default: 'train')
         """
         
         self.root_dir = root_dir
@@ -35,7 +33,6 @@ class DomenDataset(Dataset):
         self.samples = [
             os.path.join(self.root_dir, file_name)
             for file_name in os.listdir(self.root_dir)
-            if file_name.lower().endswith(['.jpg', '.png'])
         ]
 
 
