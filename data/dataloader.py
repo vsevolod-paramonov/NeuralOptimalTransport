@@ -29,7 +29,7 @@ class DomenLoader:
 
         self.config = config
   
-        self.batch_size = 3
+        self.batch_size = self.config.training.batch_size
         self.shuffle = True
 
         self.domen_X = domen_X

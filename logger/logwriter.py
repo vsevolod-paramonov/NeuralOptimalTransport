@@ -7,7 +7,8 @@ from typing import Optional
 
 class Logger:
 
-    def __init__(self, log_root: str=None, log_name: str=None):
+    def __init__(self, log_root: str=None, 
+                       log_name: str=None):
         
         self.logger = logging.getLogger('Logger')
         self.logger.setLevel(logging.INFO)

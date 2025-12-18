@@ -10,19 +10,11 @@ from utils import before_after_OT
 from abc import abstractmethod
 from logger import logwriter
 
-domen_X = '/Users/vsevolodparamonov/Downloads/img_align_celeba'
-domen_Y = '/Users/vsevolodparamonov/Downloads/cropped'
-experiment_dir = '/Users/vsevolodparamonov/NeuralOptimalTransport/experiments'
-exp_name = 'default'
-source_path = '/Users/vsevolodparamonov/NeuralOptimalTransport/inference/source'
-target_path = '/Users/vsevolodparamonov/NeuralOptimalTransport/inference/target'
-epoch_num = 10
-
 
 class BaseTrainer:
     def __init__(self, config):
         self.config = config
-        self.device = 'cpu'
+        self.device = self.config.training.device
 
     
     def setup(self):
@@ -50,24 +42,24 @@ class BaseTrainer:
         self.logwriter = logwriter.Logger(exp_logs_dir)
 
     def setup_experiment_dir(self):
-        self.experiment_dir = os.path.join(os.getcwd(), experiment_dir, exp_name)
+        self.experiment_dir = os.path.join(os.getcwd(), self.config.experiments.experiment_dir, self.config.experiments.exp_name)
         os.makedirs(self.experiment_dir, exist_ok=True)
 
     def setup_datasets(self):
-        self.source_dataset = DomenDataset(domen_X)
-        self.target_dataset = DomenDataset(domen_Y)
+        self.source_dataset = DomenDataset(self.config.data.source_images)
+        self.target_dataset = DomenDataset(self.config.data.target_images)
         
     def setup_dataloaders(self):
-        self.dataloader = DomenLoader(..., self.source_dataset, self.target_dataset)
+        self.dataloader = DomenLoader(self.config, self.source_dataset, self.target_dataset)
 
     def training_loop(self):
-        # self.to_train()
+        self.to_train()
 
         self.logwriter._log_custom_message('Started fitting')
         self.iter = 0
         self.cur_epoch = 0
 
-        for i in range(epoch_num):
+        for i in range(1, self.config.training.num_epochs + 1):
 
             self.cur_epoch = i
             train_loss = self.train_epoch()
@@ -75,24 +67,26 @@ class BaseTrainer:
             # if i % self.config.train.checkpoint_step == 0 and i > 0:
             #     self.save_checkpoint()
 
-            self.generate_images()
+            if i % self.config.training.sampling_epochs == 0 and i > 0:
+                self.logwriter._log_custom_message('Sampling images')
+                self.generate_images()
 
             self.logwriter._log_metrics(train_loss, i)
-
-            break
 
         self.logwriter._log_custom_message('Fitting ended')
 
     
     def generate_images(self):
 
-        assert len(os.listdir(source_path)) > 0, 'Pass images to sample!'
+        self.to_eval()
 
-        if os.path.exists(target_path):
-            shutil.rmtree(target_path)
+        assert len(os.listdir(self.config.sampling.source_path)) > 0, 'Pass images to sample!'
+
+        if os.path.exists(self.config.sampling.target_path):
+            shutil.rmtree(self.config.sampling.target_path)
 
         ### Clear images from previous sampling
-        os.makedirs(target_path)
+        os.makedirs(self.config.sampling.target_path)
 
         to_tensor = v2.Compose([
                                 v2.ToImage(),
@@ -101,12 +95,10 @@ class BaseTrainer:
         
         samples = torch.stack([
             to_tensor(
-            Image.open(os.path.join(source_path, file_name)).convert('RGB')
+            Image.open(os.path.join(self.config.sampling.source_path, file_name)).convert('RGB')
             )
-            for file_name in os.listdir(source_path)
+            for file_name in os.listdir(self.config.sampling.source_path)
             ])
-        
-        print(samples.shape)
         
         output = self.inference(samples)
 

@@ -1,6 +1,15 @@
+experiments:
+  experiment_dir: /Users/vsevolodparamonov/NeuralOptimalTransport/experiments
+  exp_name: default
+
+data:
+  source_images: /Users/vsevolodparamonov/Downloads/img_align_celeba
+  target_images: /Users/vsevolodparamonov/Downloads/cropped
+
 training:
   device: cpu
-  num_steps: 5000
+  num_epochs: 32
+  sampling_epochs: 1
   batch_size: 64
 
 checkpoint:
@@ -16,4 +25,5 @@ optimizer:
   weight_decay: 0.05
 
 sampling:
-  num_samples: 5
+  source_path: /Users/vsevolodparamonov/NeuralOptimalTransport/inference/source
+  target_path: /Users/vsevolodparamonov/NeuralOptimalTransport/inference/target

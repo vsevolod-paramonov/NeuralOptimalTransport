@@ -2,10 +2,10 @@ from trainer.base_trainer import BaseTrainer
 from hydra.utils import instantiate, get_class
 
 from metrics import L2
-
 from models import Discriminator, UNet
 
 import torch
+import numpy as np
 
 
 class NOTrainer(BaseTrainer):
@@ -91,7 +91,7 @@ class NOTrainer(BaseTrainer):
 
         B, C, H, W = params
 
-        return torch.randn(B, 1, H, W)
+        return torch.randn(B, 1, H, W) * np.sqrt(self.config.model_params.noise_variance)
 
     def train_critic(self, x0: torch.Tensor, 
                            x1: torch.Tensor):
@@ -171,13 +171,8 @@ class NOTrainer(BaseTrainer):
             ### One step fit for generator
             generator_loss += self.train_generator(x0)
 
-            break
-
-        # critic_loss /= (len(self.dataloader) * 5)
-        # generator_loss /= len(self.dataloader)
-
-        critic_loss /= (1 * 5)
-        generator_loss /= 1
+        critic_loss /= (len(self.dataloader) * 5)
+        generator_loss /= len(self.dataloader)
 
         return {'Loss': generator_loss + critic_loss}
 
@@ -192,12 +187,10 @@ class NOTrainer(BaseTrainer):
             Samples from p^t
         """
 
-        self.generator.eval()
-
-        batch = batch.to(self.device)
+        batch = batch.to(self.device) * 2 - 1
         z = self._sample_noise(batch.shape).to(self.device)
 
         with torch.no_grad():
             out = self.generator(batch, z)
 
-        return out.cpu()
+        return out.cpu() * 0.5 + 0.5
