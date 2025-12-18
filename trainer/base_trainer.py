@@ -1,7 +1,11 @@
 import os
+import shutil
 import torch
+from torchvision.transforms import v2
+from PIL import Image
 
 from data import DomenDataset, DomenLoader
+from utils import before_after_OT
 
 from abc import abstractmethod
 from logger import logwriter
@@ -10,6 +14,8 @@ domen_X = '/Users/vsevolodparamonov/Downloads/img_align_celeba'
 domen_Y = '/Users/vsevolodparamonov/Downloads/cropped'
 experiment_dir = '/Users/vsevolodparamonov/NeuralOptimalTransport/experiments'
 exp_name = 'default'
+source_path = '/Users/vsevolodparamonov/NeuralOptimalTransport/inference/source'
+target_path = '/Users/vsevolodparamonov/NeuralOptimalTransport/inference/target'
 epoch_num = 10
 
 
@@ -69,14 +75,48 @@ class BaseTrainer:
             # if i % self.config.train.checkpoint_step == 0 and i > 0:
             #     self.save_checkpoint()
 
+            self.generate_images()
 
             self.logwriter._log_metrics(train_loss, i)
 
+            break
+
         self.logwriter._log_custom_message('Fitting ended')
 
-            
+    
+    def generate_images(self):
+
+        assert len(os.listdir(source_path)) > 0, 'Pass images to sample!'
+
+        if os.path.exists(target_path):
+            shutil.rmtree(target_path)
+
+        ### Clear images from previous sampling
+        os.makedirs(target_path)
+
+        to_tensor = v2.Compose([
+                                v2.ToImage(),
+                                v2.ToDtype(torch.float32, scale=True)
+                                ])
+        
+        samples = torch.stack([
+            to_tensor(
+            Image.open(os.path.join(source_path, file_name)).convert('RGB')
+            )
+            for file_name in os.listdir(source_path)
+            ])
+        
+        print(samples.shape)
+        
+        output = self.inference(samples)
+
+        before_after_OT(samples, output)
+
+        return 
+
+
     @abstractmethod
-    def inference(self, seq):
+    def inference(self, batch):
         pass
 
     @abstractmethod

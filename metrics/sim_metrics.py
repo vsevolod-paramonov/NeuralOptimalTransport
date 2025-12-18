@@ -9,7 +9,7 @@ import numpy as np
 class L2:
     """
     L2 distance between img1 and img2
-    L2 = 1/N ||img1 - img2||^2
+    L2 = ||img1 - img2||^2
     """
 
     def __call__(self, img1: torch.Tensor, 

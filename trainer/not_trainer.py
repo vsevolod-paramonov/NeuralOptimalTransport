@@ -29,9 +29,9 @@ class NOTrainer(BaseTrainer):
         self.generator = UNet(in_channels=4, 
                               out_channels=3, 
                               base_factor=32, 
-                              bilinear=True)
+                              bilinear=True).to(self.device)
         
-        self.critic = Discriminator(in_channels=3)
+        self.critic = Discriminator(in_channels=3).to(self.device)
 
 
         ### чекать конфиг
@@ -78,6 +78,68 @@ class NOTrainer(BaseTrainer):
         self.generator.eval()
         self.critic.eval()
 
+    def _sample_noise(self, params: tuple):
+        """
+        Sample standart normal variable Z
+
+
+        Args:
+        -----
+        params : tuple
+            Params for standart normal noise
+        """
+
+        B, C, H, W = params
+
+        return torch.randn(B, 1, H, W)
+
+    def train_critic(self, x0: torch.Tensor, 
+                           x1: torch.Tensor):
+        """
+        Function to fit only critic with fixed generator
+        """
+
+        self.optimizer_critic.zero_grad()
+
+        z = self._sample_noise(x0.shape)
+
+        ### Freeze generator parameters
+        with torch.no_grad():
+            tilde_x = self.generator(x0, z)
+        
+        loss_critic = -(self.gan_loss(tilde_x, x1)).mean()
+        loss_critic.backward()
+
+        self.optimizer_critic.step()
+
+        return loss_critic.item()
+
+    def train_generator(self, x0: torch.Tensor):
+        """
+        Unfreeze generator and fit it after several critic training steps
+
+        Args:
+        -----
+        x0 : torch.Tensor
+            Input data from p^s
+        """
+
+        self.optimizer_generator.zero_grad()
+
+        z = self._sample_noise(x0.shape)
+
+        tilde_x = self.generator(x0, z)
+
+        ot_loss = self.ot_loss(x0, tilde_x).mean()
+        loss_gen = ot_loss + self.critic(tilde_x).mean()
+
+        loss_gen.backward()
+
+        self.optimizer_generator.step()
+
+        return loss_gen.item()
+    
+
     def train_epoch(self):
         """
         Make one training iteration over all batches for NOT model:
@@ -90,7 +152,8 @@ class NOTrainer(BaseTrainer):
             Dictionary containing the loss value for the training step
         """
 
-        cumm_loss = 0.0
+        critic_loss = 0.0
+        generator_loss = 0.0
 
         self.optimizer_generator.zero_grad()
         self.optimizer_critic.zero_grad()
@@ -98,31 +161,43 @@ class NOTrainer(BaseTrainer):
         for batch in self.dataloader:
 
             ### Sample from p^s and p^t => [0, 1] -> [-1, 1]
-            x_0, x_1 = (batch['images_X'].to(self.device) * 2 - 1,
+            x0, x1 = (batch['images_X'].to(self.device) * 2 - 1,
                         batch['images_Y'].to(self.device) * 2 - 1)
 
-            B, C, H, W = x_0.shape
+            ### Fit only critic
+            for _ in range(5):
+                critic_loss += self.train_critic(x0, x1)
 
-            ### Sample noise 
-            z = torch.randn((B, 1, H, W)).to(self.device)
-
-            ### Generator output
-            with torch.no_grad():
-                G_x = self.generator(x_0, z)
-
-            ### OT loss + GAN-Loss
-            loss = self.ot_loss(x_0, G_x).mean() + self.gan_loss(x_1, G_x).mean()
-
-            loss.backward()
-
-            ### Update generator and critic parameters
-            self.optimizer_generator.step()
-            self.optimizer_critic.step()
-
-            cumm_loss += loss.item() * B
+            ### One step fit for generator
+            generator_loss += self.train_generator(x0)
 
             break
 
-        cumm_loss /= len(self.dataloader)
+        # critic_loss /= (len(self.dataloader) * 5)
+        # generator_loss /= len(self.dataloader)
 
-        return {'Loss': cumm_loss}
+        critic_loss /= (1 * 5)
+        generator_loss /= 1
+
+        return {'Loss': generator_loss + critic_loss}
+
+
+    def inference(self, batch: torch.Tensor):
+        """
+        Generate batch of images from input batch
+
+        Args:
+        -----
+        batch : torch.Tensor
+            Samples from p^t
+        """
+
+        self.generator.eval()
+
+        batch = batch.to(self.device)
+        z = self._sample_noise(batch.shape).to(self.device)
+
+        with torch.no_grad():
+            out = self.generator(batch, z)
+
+        return out.cpu()
