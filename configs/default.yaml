@@ -1,0 +1,19 @@
+training:
+  device: cpu
+  num_steps: 5000
+  batch_size: 64
+
+checkpoint:
+
+model_params:
+  noise_variance: 0.01
+
+unet:
+
+optimizer:
+  _target_: torch.optim.AdamW
+  lr: 1e-4
+  weight_decay: 0.05
+
+sampling:
+  num_samples: 5

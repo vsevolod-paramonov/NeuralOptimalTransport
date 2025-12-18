@@ -6,12 +6,14 @@ from torchvision.transforms import v2
 
 
 class DomenDataset(Dataset):
-    '''
+    """
     Dataset class for loading domen images
-    '''
+    """
 
-    def __init__(self, root_dir: str, transform: v2.Compose = None, split: str = 'train'):
-        '''
+    def __init__(self, root_dir: str, 
+                       transform: v2.Compose = None, 
+                       split: str = 'train'):
+        """
         Initialize the dataset
 
         Args:
@@ -22,7 +24,7 @@ class DomenDataset(Dataset):
             Transform to be applied on a sample (default: None)
         split : str
             Dataset split to use ('train', 'test') (default: 'train')
-        '''
+        """
         
         self.root_dir = root_dir
         self.transform = transform if transform is not None else v2.Compose([
@@ -38,7 +40,7 @@ class DomenDataset(Dataset):
 
 
     def __getitem__(self, index: int):
-        '''
+        """
         Get a pair of image and label by index
 
 
@@ -52,7 +54,7 @@ class DomenDataset(Dataset):
         -------
         tuple
             A tuple containing the image tensor and its corresponding label
-        '''
+        """
 
         img_path = self.samples[index]
         image = Image.open(img_path).convert('RGB')
@@ -63,13 +65,13 @@ class DomenDataset(Dataset):
 
 
     def __len__(self):
-        '''
+        """
         Return the number of samples in the dataset
 
         Returns:
         --------
         int
             Number of samples in the dataset
-        '''
+        """
 
         return len(self.samples)

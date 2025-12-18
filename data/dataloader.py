@@ -6,15 +6,15 @@ from torch.utils.data import DataLoader
 
 
 class DomenLoader:
-    '''
+    """
     DataLoader class for loading domen images
-    '''
+    """
 
     def __init__(self, config: DictConfig, 
                        domen_X: DomenDataset,
                        domen_Y: DomenDataset,
                        ):
-        '''
+        """
         Initialize the DataLoader
 
         Args:
@@ -25,12 +25,12 @@ class DomenLoader:
             Dataset with images from X domain
         domen_Y : DomenDataset
             Dataset with images from Y domain
-        '''
+        """
 
         self.config = config
   
-        self.batch_size = self.config.data.batch_size
-        self.shuffle = self.config.data.shuffle
+        self.batch_size = 64
+        self.shuffle = True
 
         self.domen_X = domen_X
         self.domen_Y = domen_Y
@@ -42,9 +42,9 @@ class DomenLoader:
 
 
     def __iter__(self):
-        '''
+        """
         Create an iterator for the DataLoader
-        '''
+        """
 
         self.indices_X = list(range(self.len_A))
         self.indices_Y = list(range(self.len_B))
@@ -57,7 +57,7 @@ class DomenLoader:
         return self
     
     def __next__(self):
-        '''
+        """
         Get the next batch of data
 
 
@@ -65,7 +65,7 @@ class DomenLoader:
         --------
         Dict
             Dictionary with batches of images from both domains
-        '''
+        """
 
         if self.current >= self.max_len:
             raise StopIteration
