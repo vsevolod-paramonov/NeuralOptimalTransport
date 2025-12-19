@@ -29,7 +29,7 @@ class Logger:
         
     def _log_metrics(self, metrics: dict, epoch: int):
 
-        metrics_string = f'[Epoch {epoch}] ' + ', '.join(f'{key}: {value}' for key, value in metrics.items())
+        metrics_string = f'[Iter {epoch}] ' + ', '.join(f'{key}: {value}' for key, value in metrics.items())
         self.logger.info(metrics_string)
 
     def _log_custom_message(self, message: str):

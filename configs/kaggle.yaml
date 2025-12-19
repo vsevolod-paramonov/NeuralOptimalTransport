@@ -1,0 +1,29 @@
+experiments:
+  experiment_dir: /kaggle/working/NeuralOptimalTransport/experiments
+  exp_name: default
+
+data:
+  source_images: /kaggle/input/source/img_align_celeba
+  target_images: /kaggle/input/simpson
+
+training:
+  device: cuda
+  num_epochs: 32
+  sampling_epochs: 2
+  batch_size: 64
+
+checkpoint:
+
+model_params:
+  noise_variance: 0.01
+
+unet:
+
+optimizer:
+  _target_: torch.optim.AdamW
+  lr: 1e-4
+  weight_decay: 0.05
+
+sampling:
+  source_path: /kaggle/working/NeuralOptimalTransport/inference/source
+  target_path: /kaggle/working/NeuralOptimalTransport/inference/target

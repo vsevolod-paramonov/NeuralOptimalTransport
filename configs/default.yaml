@@ -8,9 +8,10 @@ data:
 
 training:
   device: cpu
-  num_epochs: 32
-  sampling_epochs: 1
-  batch_size: 64
+  num_iters: 32
+  sampling_iters: 2
+  metrics_step: 0
+  batch_size: 4
 
 checkpoint:
 

@@ -57,21 +57,23 @@ class BaseTrainer:
 
         self.logwriter._log_custom_message('Started fitting')
         self.iter = 0
-        self.cur_epoch = 0
 
-        for i in range(1, self.config.training.num_epochs + 1):
+        self.dataloader_iter = iter(self.dataloader)
 
-            self.cur_epoch = i
+        for i in range(1, self.config.training.num_iters + 1):
+
             train_loss = self.train_epoch()
 
             # if i % self.config.train.checkpoint_step == 0 and i > 0:
             #     self.save_checkpoint()
 
-            if i % self.config.training.sampling_epochs == 0 and i > 0:
+            if i % self.config.training.sampling_iters == 0 and i > 0:
                 self.logwriter._log_custom_message('Sampling images')
                 self.generate_images()
 
             self.logwriter._log_metrics(train_loss, i)
+
+            self.iter += 1
 
         self.logwriter._log_custom_message('Fitting ended')
 

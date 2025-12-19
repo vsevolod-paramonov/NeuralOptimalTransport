@@ -91,7 +91,7 @@ class NOTrainer(BaseTrainer):
 
         B, C, H, W = params
 
-        return torch.randn(B, 1, H, W) * np.sqrt(self.config.model_params.noise_variance)
+        return torch.randn(B, 1, H, W).to(self.device) * np.sqrt(self.config.model_params.noise_variance)
 
     def train_critic(self, x0: torch.Tensor, 
                            x1: torch.Tensor):
@@ -112,7 +112,7 @@ class NOTrainer(BaseTrainer):
 
         self.optimizer_critic.step()
 
-        return loss_critic.item()
+        return
 
     def train_generator(self, x0: torch.Tensor):
         """
@@ -137,7 +137,7 @@ class NOTrainer(BaseTrainer):
 
         self.optimizer_generator.step()
 
-        return loss_gen.item()
+        return
     
 
     def train_epoch(self):
@@ -152,29 +152,40 @@ class NOTrainer(BaseTrainer):
             Dictionary containing the loss value for the training step
         """
 
-        critic_loss = 0.0
-        generator_loss = 0.0
-
         self.optimizer_generator.zero_grad()
         self.optimizer_critic.zero_grad()
 
-        for batch in self.dataloader:
+        try:
+            batch = next(self.dataloader_iter)
+        except StopIteration:
+            self.dataloader_iter = iter(self.dataloader)
+            batch = next(self.dataloader_iter)
 
-            ### Sample from p^s and p^t => [0, 1] -> [-1, 1]
-            x0, x1 = (batch['images_X'].to(self.device) * 2 - 1,
-                        batch['images_Y'].to(self.device) * 2 - 1)
+        ### Sample from p^s and p^t => [0, 1] -> [-1, 1]
+        x0, x1 = (batch['images_X'].to(self.device) * 2 - 1,
+                    batch['images_Y'].to(self.device) * 2 - 1)
 
-            ### Fit only critic
-            for _ in range(5):
-                critic_loss += self.train_critic(x0, x1)
+        ### Fit only critic
+        for _ in range(5):
+            self.train_critic(x0, x1)
 
-            ### One step fit for generator
-            generator_loss += self.train_generator(x0)
+        ### One step fit for generator
+        self.train_generator(x0)
 
-        critic_loss /= (len(self.dataloader) * 5)
-        generator_loss /= len(self.dataloader)
+        ### Forward pass
+        with torch.no_grad():
+            z = self._sample_noise(x0.shape)
+            tilde_x = self.generator(x0, z)
 
-        return {'Loss': generator_loss + critic_loss}
+            ot_part = self.ot_loss(x0, tilde_x)
+            gan_part = (self.critic(tilde_x) - self.critic(x1))
+
+            lagrangian_loss = ot_part.mean() + gan_part.mean()
+
+        return {'Lagrangian': lagrangian_loss.item(),
+                'OT Loss': ot_part.mean().item(),
+                'GAN Loss': gan_part.mean().item()
+                }
 
 
     def inference(self, batch: torch.Tensor):
@@ -193,4 +204,4 @@ class NOTrainer(BaseTrainer):
         with torch.no_grad():
             out = self.generator(batch, z)
 
-        return out.cpu() * 0.5 + 0.5
+        return out.cpu()

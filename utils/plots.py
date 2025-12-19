@@ -13,8 +13,15 @@ def before_after_OT(input_images: torch.Tensor,
     fig, ax = plt.subplots(2, input_images.shape[0], figsize=(20, 10))
 
     for i in range(input_images.shape[0]):
-        ax[0][i].imshow(input_images[i, :, :, :].permute(1,2,0).detach().numpy())
-        ax[1][i].imshow(output_images[i, :, :, :].permute(1,2,0).detach().numpy())
+
+        img1 = input_images[i, :, :, :]
+        img2 = output_images[i, :, :, :]
+
+        img1 = (img1.clamp(-1, 1) + 1) / 2
+        img2 = (img1.clamp(-1, 1) + 1) / 2
+
+        ax[0][i].imshow(img1.permute(1,2,0).detach().numpy())
+        ax[1][i].imshow(img2.permute(1,2,0).detach().numpy())
 
         ax[0][i].set_xticks([])
         ax[0][i].set_yticks([])

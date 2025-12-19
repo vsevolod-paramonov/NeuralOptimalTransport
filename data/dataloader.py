@@ -73,6 +73,9 @@ class DomenLoader:
         batch_indices_X = self.indices_X[self.current:self.current + self.batch_size]
         batch_indices_Y = self.indices_Y[self.current:self.current + self.batch_size]
 
+        if (len(batch_indices_X) < self.batch_size or len(batch_indices_Y) < self.batch_size):
+            raise StopIteration
+
         images_X = [self.domen_X[idx] for idx in batch_indices_X]
         images_Y = [self.domen_Y[idx] for idx in batch_indices_Y]
 
