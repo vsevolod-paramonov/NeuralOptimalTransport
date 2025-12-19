@@ -16,7 +16,8 @@ training:
 checkpoint:
 
 model_params:
-  noise_variance: 0.01
+  critic_fit_iters: 5
+  noise_variance: 0.1
 
 unet:
 

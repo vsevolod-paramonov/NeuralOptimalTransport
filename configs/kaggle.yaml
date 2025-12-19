@@ -8,13 +8,15 @@ data:
 
 training:
   device: cuda
-  num_epochs: 32
-  sampling_epochs: 2
+  num_iters: 250
+  sampling_iters: 5
+  metrics_step: 0
   batch_size: 64
 
 checkpoint:
 
 model_params:
+  critic_fit_iters: 10
   noise_variance: 0.01
 
 unet:

@@ -91,9 +91,11 @@ class BaseTrainer:
         os.makedirs(self.config.sampling.target_path)
 
         to_tensor = v2.Compose([
-                                v2.ToImage(),
-                                v2.ToDtype(torch.float32, scale=True)
-                                ])
+            v2.Resize((178, 178)),
+            v2.CenterCrop(178),  
+            v2.ToImage(),
+            v2.ToDtype(torch.float32, scale=True)
+        ])
         
         samples = torch.stack([
             to_tensor(

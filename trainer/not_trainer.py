@@ -166,7 +166,7 @@ class NOTrainer(BaseTrainer):
                     batch['images_Y'].to(self.device) * 2 - 1)
 
         ### Fit only critic
-        for _ in range(5):
+        for _ in range(self.config.model_params.critic_fit_iters):
             self.train_critic(x0, x1)
 
         ### One step fit for generator

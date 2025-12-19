@@ -1,10 +1,12 @@
 import matplotlib.pyplot as plt
 import torch
+import os
 import numpy as np
+from omegaconf import DictConfig
 
-path = '/Users/vsevolodparamonov/NeuralOptimalTransport/inference/target/output.pdf'
 
-def before_after_OT(input_images: torch.Tensor, 
+def before_after_OT(config: DictConfig,
+                    input_images: torch.Tensor, 
                     output_images: torch.Tensor):
     """
     Plot source images and generation
@@ -28,7 +30,7 @@ def before_after_OT(input_images: torch.Tensor,
         ax[0][0].set_ylabel(r'$X_0 \sim p^S$', fontsize=15)
         ax[1][0].set_ylabel(r'$G_{\theta}(X_0, Z)$', fontsize=15)
 
-    plt.savefig(path, 
+    plt.savefig(os.path.join(config.sampling.target_path, 'output.pdf'), 
             format='pdf',
             dpi=300,
             bbox_inches='tight',

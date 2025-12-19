@@ -26,6 +26,8 @@ class DomenDataset(Dataset):
         
         self.root_dir = root_dir
         self.transform = transform if transform is not None else v2.Compose([
+            v2.Resize((178, 178)),
+            v2.CenterCrop(178),  
             v2.ToImage(),
             v2.ToDtype(torch.float32, scale=True)
         ])
