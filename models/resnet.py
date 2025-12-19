@@ -6,7 +6,7 @@ from torch.nn.utils import spectral_norm
 
 class ResBlock(nn.Module):
     """
-    ResNet block for discrimintor
+    ResNet block for discriminator
     """
     def __init__(self, in_channels: int, 
                        out_channels: int, 

@@ -62,7 +62,7 @@ class BaseTrainer:
 
         for i in range(1, self.config.training.num_iters + 1):
 
-            train_loss = self.train_epoch()
+            train_loss = self.train_iter()
 
             # if i % self.config.train.checkpoint_step == 0 and i > 0:
             #     self.save_checkpoint()

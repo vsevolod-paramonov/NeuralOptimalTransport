@@ -38,7 +38,7 @@ class DomenDataset(Dataset):
 
     def __getitem__(self, index: int):
         """
-        Get a pair of image and label by index
+        Get image by index
 
 
         Args:
@@ -50,7 +50,7 @@ class DomenDataset(Dataset):
         Returns:
         -------
         tuple
-            A tuple containing the image tensor and its corresponding label
+            Image from certain domain
         """
 
         img_path = self.samples[index]

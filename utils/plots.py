@@ -17,9 +17,6 @@ def before_after_OT(input_images: torch.Tensor,
         img1 = input_images[i, :, :, :]
         img2 = output_images[i, :, :, :]
 
-        img1 = (img1.clamp(-1, 1) + 1) / 2
-        img2 = (img1.clamp(-1, 1) + 1) / 2
-
         ax[0][i].imshow(img1.permute(1,2,0).detach().numpy())
         ax[1][i].imshow(img2.permute(1,2,0).detach().numpy())
 

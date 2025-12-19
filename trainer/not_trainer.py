@@ -140,7 +140,7 @@ class NOTrainer(BaseTrainer):
         return
     
 
-    def train_epoch(self):
+    def train_iter(self):
         """
         Make one training iteration over all batches for NOT model:
 
@@ -204,4 +204,4 @@ class NOTrainer(BaseTrainer):
         with torch.no_grad():
             out = self.generator(batch, z)
 
-        return out.cpu()
+        return (out.cpu().clamp(-1, 1) + 1) / 2
