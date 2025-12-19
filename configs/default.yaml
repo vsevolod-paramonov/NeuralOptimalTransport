@@ -19,8 +19,6 @@ model_params:
   critic_fit_iters: 5
   noise_variance: 0.1
 
-unet:
-
 optimizer:
   _target_: torch.optim.AdamW
   lr: 1e-4

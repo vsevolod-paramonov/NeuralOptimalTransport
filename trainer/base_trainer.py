@@ -91,8 +91,8 @@ class BaseTrainer:
         os.makedirs(self.config.sampling.target_path)
 
         to_tensor = v2.Compose([
-            v2.Resize((178, 178)),
-            v2.CenterCrop(178),  
+            v2.Resize((256, 256)),
+            v2.CenterCrop(256),  
             v2.ToImage(),
             v2.ToDtype(torch.float32, scale=True)
         ])
@@ -106,7 +106,7 @@ class BaseTrainer:
         
         output = self.inference(samples)
 
-        before_after_OT(samples, output)
+        before_after_OT(self.config, samples, output)
 
         return 
 
