@@ -180,7 +180,7 @@ class NOTrainer(BaseTrainer):
             ot_part = self.ot_loss(x0, tilde_x)
             gan_part = (self.critic(tilde_x) - self.critic(x1))
 
-            lagrangian_loss = ot_part.mean() + gan_part.mean()
+            lagrangian_loss = ot_part.mean() - gan_part.mean()
 
         return {'Lagrangian': lagrangian_loss.item(),
                 'OT Loss': ot_part.mean().item(),

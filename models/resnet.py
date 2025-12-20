@@ -3,7 +3,6 @@ import torch.nn as nn
 import torch.nn.functional as F
 from torch.nn.utils import spectral_norm
 
-
 class ResBlock(nn.Module):
     """
     ResNet block for discriminator
@@ -43,17 +42,18 @@ class ResBlock(nn.Module):
 
 class Discriminator(nn.Module):
     """
-    ResNet based discriminator for 'expert'
+    ResNet-based discriminator
     """
-    def __init__(self, in_channels: int=3):
+    def __init__(self, in_channels: int = 3):
         super().__init__()
 
         self.block1 = ResBlock(in_channels, 64, downsample=True)
         self.block2 = ResBlock(64, 128, downsample=True)
         self.block3 = ResBlock(128, 256, downsample=True)
         self.block4 = ResBlock(256, 512, downsample=True)
+
         self.activation = nn.LeakyReLU(0.2, inplace=True)
-        self.linear = spectral_norm(nn.Linear(512, 1))
+        self.linear = spectral_norm(nn.Linear(512 * 8 * 8, 1))
 
     def forward(self, x: torch.Tensor):
         h = self.block1(x)
@@ -61,9 +61,6 @@ class Discriminator(nn.Module):
         h = self.block3(h)
         h = self.block4(h)
         h = self.activation(h)
-        h = h.sum([2, 3])
+        h = h.view(h.size(0), -1)
         out = self.linear(h)
-
         return out
-
-

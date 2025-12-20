@@ -9,13 +9,13 @@ import numpy as np
 class L2:
     """
     L2 distance between img1 and img2
-    L2 = ||img1 - img2||^2
+    L2 = 1/ (B * H * W * C) ||img1 - img2||^2
     """
 
     def __call__(self, img1: torch.Tensor, 
                        img2: torch.Tensor):
 
-        return torch.norm(img1 - img2, p=2, dim=(1, 2, 3))
+        return torch.mean((img1 - img2) ** 2, dim=(1,2,3))
 
 
 class PSNRMetric:

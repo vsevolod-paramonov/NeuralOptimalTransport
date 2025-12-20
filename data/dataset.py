@@ -11,6 +11,7 @@ class DomenDataset(Dataset):
     """
 
     def __init__(self, root_dir: str, 
+                       img_size: int,
                        transform: v2.Compose = None
                        ):
         """
@@ -26,8 +27,8 @@ class DomenDataset(Dataset):
         
         self.root_dir = root_dir
         self.transform = transform if transform is not None else v2.Compose([
-            v2.Resize((256, 256)),
-            v2.CenterCrop(256),  
+            v2.Resize((img_size, img_size)),
+            v2.CenterCrop(img_size),  
             v2.ToImage(),
             v2.ToDtype(torch.float32, scale=True)
         ])

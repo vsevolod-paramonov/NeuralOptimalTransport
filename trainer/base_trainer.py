@@ -46,8 +46,8 @@ class BaseTrainer:
         os.makedirs(self.experiment_dir, exist_ok=True)
 
     def setup_datasets(self):
-        self.source_dataset = DomenDataset(self.config.data.source_images)
-        self.target_dataset = DomenDataset(self.config.data.target_images)
+        self.source_dataset = DomenDataset(self.config.data.source_images, self.config.data.image_size)
+        self.target_dataset = DomenDataset(self.config.data.target_images, self.config.data.image_size)
         
     def setup_dataloaders(self):
         self.dataloader = DomenLoader(self.config, self.source_dataset, self.target_dataset)
@@ -91,8 +91,8 @@ class BaseTrainer:
         os.makedirs(self.config.sampling.target_path)
 
         to_tensor = v2.Compose([
-            v2.Resize((256, 256)),
-            v2.CenterCrop(256),  
+            v2.Resize((self.config.data.image_size, self.config.data.image_size)),
+            v2.CenterCrop(self.config.data.image_size),  
             v2.ToImage(),
             v2.ToDtype(torch.float32, scale=True)
         ])
