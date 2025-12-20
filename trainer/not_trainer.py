@@ -140,6 +140,58 @@ class NOTrainer(BaseTrainer):
         return
     
 
+    def _next_batch(self):
+        """
+        Safe batch iteration
+
+        Returns:
+        --------
+        Dict
+            Dict with p^t and p^s batches of images
+        """
+        try:
+            batch = next(self.dataloader_iter)
+        except:
+            self.dataloader_iter = iter(self.dataloader)
+            batch = next(self.dataloader_iter)
+
+        return batch
+    
+
+    def _norm_batch(self, batch: dict):
+        """
+        Extract images from batches and norm to [-1, 1]
+
+        Args:
+        -----
+        batch : Dict
+            Dict with p^t and p^s batches of images
+
+        Returns:
+        --------
+        Tuple(torch.Tensor, torch.Tensor)
+            Tuple with normed batches of images
+        """
+        x0, x1 = (batch['images_X'].to(self.device) * 2 - 1,
+                    batch['images_Y'].to(self.device) * 2 - 1)
+        
+        return x0, x1
+    
+    def _get_objects(self):
+        """
+        Safe way to get objects: get batch -> norm images
+
+        Returns:
+        --------
+        Tuple(torch.Tensor, torch.Tensor)
+            Tuple with normed batches of images
+        """
+        batch = self._next_batch()
+        x0, x1 = self._norm_batch(batch)
+
+        return x0, x1
+    
+
     def train_iter(self):
         """
         Make one training iteration over all batches for NOT model:
@@ -155,21 +207,14 @@ class NOTrainer(BaseTrainer):
         self.optimizer_generator.zero_grad()
         self.optimizer_critic.zero_grad()
 
-        try:
-            batch = next(self.dataloader_iter)
-        except StopIteration:
-            self.dataloader_iter = iter(self.dataloader)
-            batch = next(self.dataloader_iter)
-
-        ### Sample from p^s and p^t => [0, 1] -> [-1, 1]
-        x0, x1 = (batch['images_X'].to(self.device) * 2 - 1,
-                    batch['images_Y'].to(self.device) * 2 - 1)
 
         ### Fit only critic
         for _ in range(self.config.model_params.critic_fit_iters):
+            x0, x1 = self._get_objects()
             self.train_critic(x0, x1)
 
         ### One step fit for generator
+        x0, x1 = self._get_objects()
         self.train_generator(x0)
 
         ### Forward pass

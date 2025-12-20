@@ -5,6 +5,7 @@ experiments:
 data:
   source_images: /Users/vsevolodparamonov/Downloads/img_align_celeba
   target_images: /Users/vsevolodparamonov/Downloads/cropped
+  image_size: 128
 
 training:
   device: cpu
