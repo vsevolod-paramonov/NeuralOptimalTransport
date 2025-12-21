@@ -1,4 +1,5 @@
 experiments:
+  seed: 52
   experiment_dir: /Users/vsevolodparamonov/NeuralOptimalTransport/experiments
   exp_name: default
 
@@ -7,18 +8,30 @@ data:
   target_images: /Users/vsevolodparamonov/Downloads/cropped
   image_size: 128
 
+
 training:
+  fit: true
   device: cpu
-  num_iters: 32
-  sampling_iters: 2
-  metrics_step: 0
+  num_iters: 25000
+  sampling_iters: 1
+  checkpoint_step: 5
+  metrics_step: 1
   batch_size: 4
 
+validation:
+  val_size: 3
+  val_path: /Users/vsevolodparamonov/NeuralOptimalTransport/validation
+  metrics: ['FID', 'PSNRMetric', 'L2', 'SSIMMetric', 'LPIPSMetric']
+
+
 checkpoint:
+  save_path: /Users/vsevolodparamonov/NeuralOptimalTransport/checkpoints
+  load_path: /Users/vsevolodparamonov/NeuralOptimalTransport/checkpoints/default_2.pth
 
 model_params:
-  critic_fit_iters: 5
-  noise_variance: 0.1
+  generator_fit_iters: 1
+  critic_fit_iters: 1
+  noise_variance: 0.05
 
 optimizer:
   _target_: torch.optim.AdamW

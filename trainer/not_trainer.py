@@ -6,6 +6,7 @@ from models import Discriminator, UNet
 
 import torch
 import numpy as np
+import os
 
 
 class NOTrainer(BaseTrainer):
@@ -25,31 +26,49 @@ class NOTrainer(BaseTrainer):
         Setup models required for NOT training: UNet, ResNet
         """
 
-        ### Добавить instatinate
+        ### Models init
         self.generator = UNet(in_channels=4, 
                               out_channels=3, 
                               base_factor=32, 
                               bilinear=True).to(self.device)
         
-        self.critic = Discriminator(in_channels=3).to(self.device)
+        self.critic = Discriminator(size=self.config.data.image_size).to(self.device)
 
+        ### Load generator weights
+        if self.config.checkpoint.load_path is not None:
+            self.load_checkpoint()
 
-        ### чекать конфиг
-        if 1 != 2:
-            pass
-            # self.generator.load_state_dict(...)
-            # self.logger.log_custom_message('UNet weights were loaded')
+    def load_checkpoint(self):
+        """
+        Load models weights if wanted
+        """
 
-            # self.critic.load_state_dict(...)
-            # self.logger.log_custom_message('ResNet weights were loaded')
+        checkpoint = torch.load(self.config.checkpoint.load_path, map_location=self.device)
 
+        self.generator.load_state_dict(checkpoint['generator'])
+        self.critic.load_state_dict(checkpoint['critic'])
+
+        self.logwriter._log_custom_message('Models weights were loaded!')
+
+    def save_checkpoint(self):
+        """
+        Save models weights
+        """
+
+        checkpoint = {
+        'generator': self.generator.state_dict(),
+        'critic': self.critic.state_dict(),
+        }
+
+        file_name = f'{self.config.experiments.exp_name}_{self.iter}.pth'
+        torch.save(checkpoint, os.path.join(self.config.checkpoint.save_path, file_name))
         
     def setup_optimizers(self):
         """
         Setup optimizers for generator and critic
         """
 
-        ### Добавить instatinate
+        ### Optimizers init (for each model)
         self.optimizer_generator = torch.optim.Adam(self.generator.parameters(), lr=1e-4, weight_decay=1e-10)
         self.optimizer_critic = torch.optim.Adam(self.critic.parameters(), lr=1e-4, weight_decay=1e-10)
 
@@ -107,9 +126,9 @@ class NOTrainer(BaseTrainer):
         with torch.no_grad():
             tilde_x = self.generator(x0, z)
         
-        loss_critic = -(self.gan_loss(tilde_x, x1)).mean()
+        loss_critic = -(self.gan_loss(tilde_x, x1).mean())
+        
         loss_critic.backward()
-
         self.optimizer_critic.step()
 
         return
@@ -130,11 +149,10 @@ class NOTrainer(BaseTrainer):
 
         tilde_x = self.generator(x0, z)
 
-        ot_loss = self.ot_loss(x0, tilde_x).mean()
+        ot_loss = self.ot_loss(x0, tilde_x)
         loss_gen = ot_loss + self.critic(tilde_x).mean()
 
         loss_gen.backward()
-
         self.optimizer_generator.step()
 
         return
@@ -207,15 +225,23 @@ class NOTrainer(BaseTrainer):
         self.optimizer_generator.zero_grad()
         self.optimizer_critic.zero_grad()
 
+        ### Fit only generator
+        for _ in range(self.config.model_params.generator_fit_iters):
+            x0, x1 = self._get_objects()
+            self.critic.eval()
+            self.generator.train()
+            
+            self.train_generator(x0)
 
         ### Fit only critic
         for _ in range(self.config.model_params.critic_fit_iters):
             x0, x1 = self._get_objects()
+            self.critic.train()
+            self.generator.eval()
             self.train_critic(x0, x1)
 
-        ### One step fit for generator
-        x0, x1 = self._get_objects()
-        self.train_generator(x0)
+        self.to_eval()
+
 
         ### Forward pass
         with torch.no_grad():
@@ -225,10 +251,10 @@ class NOTrainer(BaseTrainer):
             ot_part = self.ot_loss(x0, tilde_x)
             gan_part = (self.critic(tilde_x) - self.critic(x1))
 
-            lagrangian_loss = ot_part.mean() - gan_part.mean()
+            lagrangian_loss = ot_part - gan_part.mean()
 
         return {'Lagrangian': lagrangian_loss.item(),
-                'OT Loss': ot_part.mean().item(),
+                'OT Loss': ot_part,
                 'GAN Loss': gan_part.mean().item()
                 }
 

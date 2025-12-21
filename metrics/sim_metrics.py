@@ -1,8 +1,13 @@
 import torch
-import torchvision.transforms.functional as TF
+import subprocess
+import sys
+import os
+import re
+
 from skimage.metrics import peak_signal_noise_ratio as compare_psnr
 from skimage.metrics import structural_similarity as compare_ssim
 import lpips
+
 import numpy as np
 
 
@@ -15,7 +20,7 @@ class L2:
     def __call__(self, img1: torch.Tensor, 
                        img2: torch.Tensor):
 
-        return torch.mean((img1 - img2) ** 2, dim=(1,2,3))
+        return torch.mean((img1 - img2) ** 2).item()
 
 
 class PSNRMetric:
@@ -81,4 +86,28 @@ class LPIPSMetric:
         with torch.no_grad():
             dists = self.model(img1, img2)
             
-        return dists.flatten().cpu().numpy()
+        return dists.flatten().cpu().numpy().mean()
+    
+
+class FID:
+    """
+    Fréchet inception distance (FID)
+    """
+
+    def __init__(self, device: str):
+        
+        self.device = torch.device(device)
+
+    def __call__(self, source_path: str, 
+                       target_path: str):
+    
+        assert len(os.listdir(source_path)) == len(os.listdir(target_path)), 'Please create sets of images with an equal number of items in each set'
+        
+        command = f"python -m pytorch_fid {source_path} {target_path}"
+
+        if self.device.type == 'cuda':
+            command += f' --device cuda:{self.device.index}'
+
+        result = subprocess.run(command, shell=True, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+
+        return float(re.search(r'FID:\s*([\d.]+)', result.stdout).group(1))

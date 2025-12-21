@@ -2,10 +2,11 @@ import matplotlib.pyplot as plt
 import torch
 import os
 import numpy as np
+import torchvision
 from omegaconf import DictConfig
 
 
-def before_after_OT(config: DictConfig,
+def before_after_OT(path: str,
                     input_images: torch.Tensor, 
                     output_images: torch.Tensor):
     """
@@ -30,8 +31,19 @@ def before_after_OT(config: DictConfig,
         ax[0][0].set_ylabel(r'$X_0 \sim p^S$', fontsize=15)
         ax[1][0].set_ylabel(r'$G_{\theta}(X_0, Z)$', fontsize=15)
 
-    plt.savefig(os.path.join(config.sampling.target_path, 'output.pdf'), 
+    plt.savefig(os.path.join(path, 'output.pdf'), 
             format='pdf',
             dpi=300,
             bbox_inches='tight',
             pad_inches=0.1)
+    
+
+def save_images(path: str,
+                output_images: torch.Tensor):
+    """
+    Save each image from batch separately
+    """
+
+    for i in range(output_images.shape[0]):
+        torchvision.utils.save_image(output_images[i], f"{path}/sample{i+1}.png")
+

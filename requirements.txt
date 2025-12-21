@@ -1,3 +1,4 @@
 hydra-core
 scikit-image
 lpips
+pytorch-fid
