@@ -26,7 +26,7 @@ validation:
 
 checkpoint:
   save_path: /Users/vsevolodparamonov/NeuralOptimalTransport/checkpoints
-  load_path: /Users/vsevolodparamonov/NeuralOptimalTransport/checkpoints/default_2.pth
+  load_path: 
 
 model_params:
   generator_fit_iters: 1

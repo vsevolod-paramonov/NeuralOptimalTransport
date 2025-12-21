@@ -1,17 +1,11 @@
 import os
 import shutil
 import torch
-import numpy as np
 from torchvision.transforms import v2
 from PIL import Image
 
 from data import DomenDataset, DomenLoader
 from utils import before_after_OT, save_images
-from metrics import (L2,
-                     SSIMMetric,
-                     PSNRMetric,
-                     LPIPSMetric,
-                     FID)
 
 from abc import abstractmethod
 from logger import logwriter
@@ -38,10 +32,6 @@ class BaseTrainer:
         self.setup_schedulers()
         self.setup_losses()
 
-        if self.config.validation.metrics is not None:
-            self.generate_validation()
-            self.setup_metrics()
-
         self.logwriter._log_custom_message('Models are setted up!')
 
     def setup_logger(self):
@@ -55,20 +45,6 @@ class BaseTrainer:
         self.experiment_dir = os.path.join(os.getcwd(), self.config.experiments.experiment_dir, self.config.experiments.exp_name)
         os.makedirs(self.experiment_dir, exist_ok=True)
 
-    def setup_metrics(self):
-        self.metrics = dict()
-        
-        for metric_name in self.config.validation.metrics:
-            metric_class = globals().get(metric_name)
-
-            if metric_name == 'LPIPSMetric':
-                metric_class = metric_class(net='alex', device=self.device)
-            if metric_name == 'FID':
-                metric_class = metric_class(device=self.device)
-
-            self.metrics[metric_name] = metric_class
-                
-
     def setup_datasets(self):
         self.source_dataset = DomenDataset(self.config.data.source_images, self.config.data.image_size)
         self.target_dataset = DomenDataset(self.config.data.target_images, self.config.data.image_size)
@@ -77,18 +53,19 @@ class BaseTrainer:
         self.dataloader = DomenLoader(self.config, self.source_dataset, self.target_dataset)
 
     def training_loop(self):
+        self.to_train()
+
         self.logwriter._log_custom_message('Started fitting')
         self.iter = 0
 
         self.dataloader_iter = iter(self.dataloader)
 
         for i in range(1, self.config.training.num_iters + 1):
-            self.to_train()
 
             train_loss = self.train_iter()
 
             ### Infer images from 'inference' folder
-            if (i % self.config.training.sampling_iters == 0 and i > 0) or (i == self.config.training.num_iters):
+            if i % self.config.training.sampling_iters == 0 and i > 0:
                 self.logwriter._log_custom_message('Sampling images')
                 self.generate_images()
 
@@ -99,8 +76,6 @@ class BaseTrainer:
 
             ### Calculate metrics
             if self.config.validation.metrics is not None and i % self.config.training.metrics_step == 0 and i > 0:
-                self.to_eval()
-
                 self.logwriter._log_custom_message('Calculate metrics...')
                 metrics = self.run_validation()
                 train_loss.update(metrics)
@@ -110,7 +85,6 @@ class BaseTrainer:
             self.iter += 1
 
         self.logwriter._log_custom_message('Fitting ended')
-
 
     def generate_validation(self):
         """
@@ -123,11 +97,11 @@ class BaseTrainer:
 
         os.makedirs(val_path, exist_ok=True)
 
-        if os.path.exists(source_path):
+        if os.path.exists(source_path) == False:
             shutil.rmtree(source_path)
             os.makedirs(source_path)
 
-        if os.path.exists(target_path):
+        if os.path.exists(target_path) == False:
             shutil.rmtree(target_path)
             os.makedirs(target_path)
         
@@ -147,6 +121,7 @@ class BaseTrainer:
         """
         Run validation and calculate metrics
         """
+        self.to_eval()
 
         ### Setup paths
         val_path = self.config.validation.val_path
@@ -190,12 +165,8 @@ class BaseTrainer:
 
         return metric_results
 
-
     
     def generate_images(self):
-        """
-        Generate images from config/inference/source_path folder
-        """
         self.to_eval()
 
         assert len(os.listdir(self.config.sampling.source_path)) > 0, 'Pass images to sample!'
@@ -205,7 +176,6 @@ class BaseTrainer:
 
         ### Clear images from previous sampling
         os.makedirs(self.config.sampling.target_path)
-        os.makedirs(os.path.join(self.config.sampling.target_path, 'images'))
 
         to_tensor = v2.Compose([
             v2.Resize((self.config.data.image_size, self.config.data.image_size)),
@@ -223,8 +193,7 @@ class BaseTrainer:
         
         output = self.inference(samples)
 
-        before_after_OT(self.config.sampling.target_path, samples, output)
-        save_images(os.path.join(self.config.sampling.target_path, 'images'), output)
+        before_after_OT(self.config, samples, output)
 
         return 
 
@@ -250,7 +219,7 @@ class BaseTrainer:
         pass
 
     @abstractmethod
-    def train_iter(self):
+    def train_epoch(self):
         pass
 
     @abstractmethod

@@ -62,13 +62,14 @@ class NOTrainer(BaseTrainer):
 
         file_name = f'{self.config.experiments.exp_name}_{self.iter}.pth'
         torch.save(checkpoint, os.path.join(self.config.checkpoint.save_path, file_name))
+
         
     def setup_optimizers(self):
         """
         Setup optimizers for generator and critic
         """
 
-        ### Optimizers init (for each model)
+        ### Добавить instatinate
         self.optimizer_generator = torch.optim.Adam(self.generator.parameters(), lr=1e-4, weight_decay=1e-10)
         self.optimizer_critic = torch.optim.Adam(self.critic.parameters(), lr=1e-4, weight_decay=1e-10)
 
@@ -149,7 +150,7 @@ class NOTrainer(BaseTrainer):
 
         tilde_x = self.generator(x0, z)
 
-        ot_loss = self.ot_loss(x0, tilde_x)
+        ot_loss = self.ot_loss(x0, tilde_x).mean()
         loss_gen = ot_loss + self.critic(tilde_x).mean()
 
         loss_gen.backward()
@@ -242,7 +243,6 @@ class NOTrainer(BaseTrainer):
 
         self.to_eval()
 
-
         ### Forward pass
         with torch.no_grad():
             z = self._sample_noise(x0.shape)
@@ -251,10 +251,10 @@ class NOTrainer(BaseTrainer):
             ot_part = self.ot_loss(x0, tilde_x)
             gan_part = (self.critic(tilde_x) - self.critic(x1))
 
-            lagrangian_loss = ot_part - gan_part.mean()
+            lagrangian_loss = ot_part.mean() - gan_part.mean()
 
         return {'Lagrangian': lagrangian_loss.item(),
-                'OT Loss': ot_part,
+                'OT Loss': ot_part.mean().item(),
                 'GAN Loss': gan_part.mean().item()
                 }
 

@@ -15,10 +15,11 @@ training:
   batch_size: 64
 
 checkpoint:
+  save_path: /kaggle/working/NeuralOptimalTransport/checkpoints
 
 model_params:
-  generator_fit_iters: 8
-  critic_fit_iters: 3
+  generator_fit_iters: 10
+  critic_fit_iters: 2
   noise_variance: 0.05
 
 unet:
