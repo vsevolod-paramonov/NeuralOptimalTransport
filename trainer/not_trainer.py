@@ -150,7 +150,7 @@ class NOTrainer(BaseTrainer):
 
         tilde_x = self.generator(x0, z)
 
-        ot_loss = self.ot_loss(x0, tilde_x).mean()
+        ot_loss = self.ot_loss(x0, tilde_x)
         loss_gen = ot_loss + self.critic(tilde_x).mean()
 
         loss_gen.backward()
@@ -251,10 +251,10 @@ class NOTrainer(BaseTrainer):
             ot_part = self.ot_loss(x0, tilde_x)
             gan_part = (self.critic(tilde_x) - self.critic(x1))
 
-            lagrangian_loss = ot_part.mean() - gan_part.mean()
+            lagrangian_loss = ot_part - gan_part.mean()
 
         return {'Lagrangian': lagrangian_loss.item(),
-                'OT Loss': ot_part.mean().item(),
+                'OT Loss': ot_part,
                 'GAN Loss': gan_part.mean().item()
                 }
 

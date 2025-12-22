@@ -7,6 +7,8 @@ import re
 from skimage.metrics import peak_signal_noise_ratio as compare_psnr
 from skimage.metrics import structural_similarity as compare_ssim
 import lpips
+from pytorch_fid import fid_score
+
 
 import numpy as np
 
@@ -20,7 +22,7 @@ class L2:
     def __call__(self, img1: torch.Tensor, 
                        img2: torch.Tensor):
 
-        return torch.mean((img1 - img2) ** 2).item()
+        return torch.mean((img1 - img2) ** 2)
 
 
 class PSNRMetric:
@@ -103,11 +105,10 @@ class FID:
     
         assert len(os.listdir(source_path)) == len(os.listdir(target_path)), 'Please create sets of images with an equal number of items in each set'
         
-        command = f"python -m pytorch_fid {source_path} {target_path}"
+        fid_value = fid_score.calculate_fid_given_paths(
+                    paths=[source_path, target_path],
+                    batch_size=50,
+                    device=self.device,
+                    dims=2048)
 
-        if self.device.type == 'cuda':
-            command += f' --device cuda:{self.device.index}'
-
-        result = subprocess.run(command, shell=True, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
-
-        return float(re.search(r'FID:\s*([\d.]+)', result.stdout).group(1))
+        return fid_value

@@ -1,11 +1,18 @@
 import os
 import shutil
 import torch
+import numpy as np
 from torchvision.transforms import v2
 from PIL import Image
 
 from data import DomenDataset, DomenLoader
 from utils import before_after_OT, save_images
+from metrics import (L2,
+                     SSIMMetric,
+                     PSNRMetric,
+                     LPIPSMetric,
+                     FID)
+
 
 from abc import abstractmethod
 from logger import logwriter
@@ -32,6 +39,10 @@ class BaseTrainer:
         self.setup_schedulers()
         self.setup_losses()
 
+        if self.config.validation.metrics is not None:
+            self.generate_validation()
+            self.setup_metrics()
+
         self.logwriter._log_custom_message('Models are setted up!')
 
     def setup_logger(self):
@@ -51,6 +62,19 @@ class BaseTrainer:
         
     def setup_dataloaders(self):
         self.dataloader = DomenLoader(self.config, self.source_dataset, self.target_dataset)
+
+    def setup_metrics(self):
+        self.metrics = dict()
+        
+        for metric_name in self.config.validation.metrics:
+            metric_class = globals().get(metric_name)
+
+            if metric_name == 'LPIPSMetric':
+                metric_class = metric_class(net='alex', device=self.device)
+            if metric_name == 'FID':
+                metric_class = metric_class(device=self.device)
+
+            self.metrics[metric_name] = metric_class
 
     def training_loop(self):
         self.to_train()
@@ -86,6 +110,7 @@ class BaseTrainer:
 
         self.logwriter._log_custom_message('Fitting ended')
 
+        
     def generate_validation(self):
         """
         Prepare samples for validation
@@ -97,13 +122,13 @@ class BaseTrainer:
 
         os.makedirs(val_path, exist_ok=True)
 
-        if os.path.exists(source_path) == False:
+        if os.path.exists(source_path) == True:
             shutil.rmtree(source_path)
-            os.makedirs(source_path)
+        os.makedirs(source_path, exist_ok=True)
 
-        if os.path.exists(target_path) == False:
+        if os.path.exists(target_path) == True:
             shutil.rmtree(target_path)
-            os.makedirs(target_path)
+        os.makedirs(target_path, exist_ok=True)
         
         np.random.seed(self.config.experiments.seed)
         random_images = np.random.choice(range(len(self.source_dataset)), 
@@ -193,7 +218,7 @@ class BaseTrainer:
         
         output = self.inference(samples)
 
-        before_after_OT(self.config, samples, output)
+        before_after_OT(self.config.sampling.target_path, samples, output)
 
         return 
 
