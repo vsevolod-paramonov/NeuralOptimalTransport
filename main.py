@@ -22,13 +22,11 @@ def main(cfg: DictConfig):
 
     ### Otherwise inference
     else:
-        assert (cfg.checkpoint.generator_checkpoint is not None 
+        assert cfg.training.fit != True and (cfg.checkpoint.generator_checkpoint is not None 
                 and cfg.checkpoint.critic_checkpoint is not None), 'No checkpoint was found'
-    
-    # if not cfg.inference.inference_mode:
-    #     trainer.training_loop()
 
-    # trainer.translate_text(cfg.inference.test_path, 'test_pred')
+    ### Run inference
+    trainer.generate_images()
 
 if __name__ == "__main__":
     main()

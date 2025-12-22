@@ -1,21 +1,30 @@
 experiments:
   experiment_dir: /kaggle/working/NeuralOptimalTransport/experiments
   exp_name: default
+  seed: 52
 
 data:
-  source_images: /kaggle/input/source/img_align_celeba
+  source_images: /kaggle/input/celeba/img_align_celeba
   target_images: /kaggle/input/simpson
   image_size: 128
 
 training:
+  fit: true
   device: cuda
   num_iters: 25000
   sampling_iters: 30
-  metrics_step: 0
+  checkpoint_step: 100
+  metrics_step: 30
   batch_size: 64
 
 checkpoint:
   save_path: /kaggle/working/NeuralOptimalTransport/checkpoints
+  load_path:
+
+validation:
+  val_size: 256
+  val_path: /kaggle/working/NeuralOptimalTransport/validation
+  metrics: ['FID', 'PSNRMetric', 'L2', 'SSIMMetric', 'LPIPSMetric']
 
 model_params:
   generator_fit_iters: 10
@@ -25,8 +34,8 @@ model_params:
 unet:
 
 optimizer:
-  _target_: torch.optim.AdamW
-  lr: 1e-4
+  _target_: torch.optim.Adam
+  lr: 1e-5
   weight_decay: 5e-9
 
 sampling:

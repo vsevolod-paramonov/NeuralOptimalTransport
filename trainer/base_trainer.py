@@ -192,6 +192,9 @@ class BaseTrainer:
 
     
     def generate_images(self):
+        """
+        Infer images from /inference/source folder
+        """
         self.to_eval()
 
         assert len(os.listdir(self.config.sampling.source_path)) > 0, 'Pass images to sample!'

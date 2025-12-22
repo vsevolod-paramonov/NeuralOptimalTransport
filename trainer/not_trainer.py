@@ -69,9 +69,18 @@ class NOTrainer(BaseTrainer):
         Setup optimizers for generator and critic
         """
 
-        ### Добавить instatinate
-        self.optimizer_generator = torch.optim.Adam(self.generator.parameters(), lr=1e-4, weight_decay=1e-10)
-        self.optimizer_critic = torch.optim.Adam(self.critic.parameters(), lr=1e-4, weight_decay=1e-10)
+        optimizer_cfg_generator = {
+                        **self.config.optimizer,
+                        "params": self.generator.parameters(),
+                        }
+        self.optimizer_generator = instantiate(optimizer_cfg_generator)
+
+        
+        optimizer_cfg_critic = {
+                        **self.config.optimizer,
+                        "params": self.critic.parameters(),
+                        }
+        self.optimizer_critic = instantiate(optimizer_cfg_critic)
 
 
     def setup_losses(self):
